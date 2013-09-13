@@ -1,0 +1,7 @@
+*.pyc
+*.swp
+
+_trial_temp
+twistd.pid
+config.ini
+dropin.cache
