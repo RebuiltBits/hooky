@@ -53,7 +53,7 @@ Running it in verbose mode with console logging:
 
 Or, if you'd rather have logs sent to syslog:
 
-    Matts-MacBook-Pro-2:hooky diranged$ hooky -l debug -c config.ini -s local0
+    MacBook-Pro:hooky $ hooky -l debug -c config.ini -s local0
     ...
 
 
@@ -109,7 +109,7 @@ file. Its that easy!
 ### hooky.translators.base.TestTranslator
 
 #### Configuration Reference
-**No cconfiguration parameters **
+**No configuration parameters **
 
 #### Usage
 Accepts XML/JSON or URI arguments, parses them, and returns back to the caller a set of variable names that can be substituted into a template for the PostTranslator. For example, if you submit the [Github example JSON](https://help.github.com/articles/post-receive-hooks) and submit it to the TestTranslator hook:
