@@ -24,8 +24,8 @@ import xmltodict
 log = logging.getLogger(__name__)
 
 
-class ContentException(Exception):
-    """Raised when the supplied webhook content is invalid"""
+class RequestException(Exception):
+    """Raised when the supplied webhook http request is invalid"""
 
 
 class RemoteHookException(Exception):
@@ -43,12 +43,12 @@ class BaseTranslator(object):
     Tornado IOLoop to continue operating on other requests.
     """
 
-    def submit(self, content):
-        """Generator that translates content into an outbound hook.
+    def submit(self, request):
+        """Generator that translates an HTTPRequest into an outbound hook.
 
-        This method takes in the content (request body, or arguments),
-        translates them into an appropriate outbound template and operates
-        in an asynchronous way on that template.
+        This method takes in the HTTPRequest object and translates
+        it into an appropriate outbound template and operates in an
+        asynchronous way on that template.
 
         Rather than returning a result, this method must be wrapped by
         @tornado.gen.coroutine, and when finished handling its data
@@ -57,56 +57,60 @@ class BaseTranslator(object):
         to the caller.
 
         args:
-            content: String value of the content supplied by the web call.
+            request: tornado.httpclient.HTTPRequest object
         """
         raise NotImplementedError('Not implemented. Use one of my subclasses.')
 
-    def _content_to_dict(self, content):
-        """Translates supplied content into a dictionary.
+    def _request_to_dict(self, request):
+        """Translates supplied HTTPRequest into a dictionary.
 
-        Walks through the supplied content (arguments, or request body) and
-        tries to translate it into a dictionary. Supports inbound XML, JSON
-        and request argument dictionaries.
+        Walks through the supplied HTTPRequest object and tries to translate it
+        into a dictionary. Supports inbound XML and JSON inside the reques
+        POST body, or key=value pairs as GET arguments.
 
         args:
-            content: String value of the content to convert to a dict
+            request: tornado.httpclient.HTTPRequest object
 
         returns:
             data: A dictionary of data
 
         raises:
-            ContentException: If the content cannot be converted into a dict
+            RequestException: If the content cannot be converted into a dict
         """
-        # If content is already a dict, just return it
-        if isinstance(content, dict):
-            log.debug('Content is dict...')
-            return content
+        # Begin a dictionary of content with the request parameters themselves.
+        content = {}
+        content['request'] = request.__dict__
+
+        # Append the headers as well
+        content['headers'] = getattr(request, 'headers', None)
+
+        # Now convert the arguments
+        content['arguments'] = getattr(request, 'arguments', None)
 
         # See if the data is JSON
         try:
-            log.debug('Attempting to parse supplied content as JSON')
-            data = json.loads(content)
+            log.debug('Attempting to parse supplied body as JSON')
+            data = json.loads(request.body)
         except (ValueError, TypeError):
             log.debug('Content is not JSON...')
             pass
         else:
             log.debug('Content is JSON...')
-            return data
+            content['body'] = data
 
         # See if the data is XML
         try:
-            log.debug('Attempting to parse supplied content as XML')
-            data = xmltodict.parse(content)
-        except ExpatError:
+            log.debug('Attempting to parse supplied body as XML')
+            data = xmltodict.parse(request.body)
+        except (ExpatError, TypeError):
             log.debug('Content is not XML...')
             pass
         else:
             log.debug('Content is XML...')
-            return data
+            content['body'] = data
 
-        # If we got here, we've run out of possibilities. Raise an exception.
-        raise ContentException('Supplied content is not valid JSON or XML: %s'
-                               % content)
+        # Lastly, return the content object
+        return content
 
 
 class TestTranslator(BaseTranslator):
@@ -123,11 +127,11 @@ class TestTranslator(BaseTranslator):
         log.debug('Initializing TestTranslator object...')
 
     @gen.coroutine
-    def submit(self, content):
+    def submit(self, request):
         """Translates an incoming webchook and returns a predefined template.
 
         args:
-            content: A string containing the incoming webhook data.
+            request: tornado.httpclient.HTTPRequest object
 
         raises:
             doc: A listing of all possible fields that were submitted
@@ -136,12 +140,7 @@ class TestTranslator(BaseTranslator):
         log.debug('%s beginning...' % self)
 
         # Parse the incoming data into a dict that we can handle
-        try:
-            data = self._content_to_dict(content)
-        except ContentException, e:
-            log.debug('Error')
-            response = ({'success': False, 'message': format(str(e))})
-            raise gen.Return(response)
+        data = self._request_to_dict(request)
 
         # Now that we have the dict, create a dynamic template that lists
         # all of the keys in that dict.

@@ -93,7 +93,7 @@ class HookHandler(web.RequestHandler):
                                       utils.getStaticPath())
 
     @gen.coroutine
-    def submitToTranslators(self, data, translators):
+    def submitToTranslators(self, translators):
         """Submits the work to the translators and handles the response.
 
         This method calls out to the translator[0] object submit() method
@@ -102,13 +102,16 @@ class HookHandler(web.RequestHandler):
         to the end-user.
 
         args:
+            translators: A dictionary of Translator objects
+
+        returns:
             response: A dictionary that contains a 'success' and 'message'
                       key that describe the results. The 'success' key must
                       be a Boolean. eg:
 
                       {'success': True, 'message': 'OK' }
         """
-        response = yield translators[0].submit(data)
+        response = yield translators[0].submit(self.request)
 
         log.debug('Translator response: %s' % response)
         try:
@@ -128,36 +131,41 @@ class HookHandler(web.RequestHandler):
         self.finish()
 
     @gen.coroutine
-    def handleInitialRequest(self, data, hook):
+    def handleInitialRequest(self, hook):
+        """Handle the HTTPRequest object and serve up the appropriate response.
+
+        If the HTTPRequest object contains no arguments or body data, we serve
+        up a basic HTML form for the hook requested . Otherwise, we pass the
+        request on to the translators configured for this webhook.
+        """
         # As long as a hook name is supplied, get the list of translators
         translators = self.config.getHookConfig(hook)['translators']
 
         # Determine whether or not individual arguments were passed via the
         # GET call. If no arguments were passed, render a generic page where
         # data can be manually submitted.
-        #if ((hook is not None or '/') and (self.request.arguments is {})):
-        if (data == {} or data is None or data == ''):
+        #
+        if ((self.request.arguments == {} or self.request.arguments is None)
+                and self.request.body == ''):
             data = {'name': hook, 'translators': translators}
             self.write(self.loader.load('hook/submit.tmpl').generate(**data))
             return
 
-        # Post body data takes precedence over arguments passed on the
-        # hook URI line.
         log.debug('Passing supplied data to translators: %s' % translators)
-        yield self.submitToTranslators(data, translators)
+        yield self.submitToTranslators(translators)
 
     @gen.coroutine
     def get(self, hook):
         """Renders a page describing the inbound hook and how to use it."""
         # Pass the args into our translator
-        yield self.handleInitialRequest(self.request.arguments, hook)
+        yield self.handleInitialRequest(hook)
 
     @gen.coroutine
     def post(self, hook):
         # Pass the args into our translator
-        yield self.handleInitialRequest(self.request.body, hook)
+        yield self.handleInitialRequest(hook)
 
     @gen.coroutine
     def put(self, hook):
         # Pass the args into our translator
-        yield self.handleInitialRequest(self.request.body, hook)
+        yield self.handleInitialRequest(hook)

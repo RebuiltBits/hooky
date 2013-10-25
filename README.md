@@ -117,23 +117,16 @@ Accepts XML/JSON or URI arguments, parses them, and returns back to the caller a
     MacBook-Pro:hooky $ curl -X POST -d @test_data/sources/github.json http://localhost:8080/hook/test
     
     Results: Key Name => Key value
-    {{after}} => 1481a2de7b2a7d02428ad93446ab166be7793fbb
-    {{before}} => 17c497ccc7cca9c2f735aa07e9e3813060ce9a6a
-    {{commits}} => [{u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-02-22T13:50:07-08:00', u'modified': [u'README.md'], u'url': u'https://github.com/octokitty/testing/commit/c441029cf673f84c8b7db52d0a5944ee5c52ff89', u'message': u'Test', u'removed': [], u'id': u'c441029cf673f84c8b7db52d0a5944ee5c52ff89'}, {u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-02 22T14:07:13-08:00', u'modified': [u'README.md'], u'url': u'https://github.com/octokitty/testing/commit/36c5f2243ed24de58284a96f2a643bed8c028658', u'message': u'This is me testing the windows client.', u'removed': [], u'id': u'36c5f2243ed24de58284a96f2a643bed8c028658'}, {u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [u'words/madame-bovary.txt'], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-03-12T08:14:29-07:00', u'modified': [], u'url': u'https://github.com/octokitty/testing/commit/1481a2de7b2a7d02428ad93446ab166be7793fbb', u'message': u'Rename madame-bovary.txt to words/madame-bovary.txt', u'removed': [u'madame-bovary.txt'], u'id': u'1481a2de7b2a7d02428ad93446ab166be7793fbb'}]
-    {{compare}} => https://github.com/octokitty/testing/compare/17c497ccc7cc...1481a2de7b2a
-    {{created}} => False
-    {{deleted}} => False
-    {{forced}} => False
-    {{head_commit.added}} => [u'words/madame-bovary.txt']
-    {{head_commit.author.email}} => lolwut@noway.biz
+    {{body.after}} => 1481a2de7b2a7d02428ad93446ab166be7793fbb
+    {{body.before}} => 17c497ccc7cca9c2f735aa07e9e3813060ce9a6a
+    {{body.commits}} => [{u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-02-22T13:50:07-08:00', u'modified': [u'README.md'], u'url': u'https://github.com/octokitty/testing/commit/c441029cf673f84c8b7db52d0a5944ee5c52ff89', u'message': u'Test', u'removed': [], u'id': u'c441029cf673f84c8b7db52d0a5944ee5c52ff89'}, {u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-02-22T14:07:13-08:00', u'modified': [u'README.md'], u'url': u'https://github.com/octokitty/testing/commit/36c5f2243ed24de58284a96f2a643bed8c028658', u'message': u'This is me testing the windows client.', u'removed': [], u'id': u'36c5f2243ed24de58284a96f2a643bed8c028658'}, {u'committer': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'added': [u'words/madame-bovary.txt'], u'author': {u'username': u'octokitty', u'email': u'lolwut@noway.biz', u'name': u'Garen Torikian'}, u'distinct': True, u'timestamp': u'2013-03-12T08:14:29-07:00', u'modified': [], u'url': u'https://github.com/octokitty/testing/commit/1481a2de7b2a7d02428ad93446ab166be7793fbb', u'message': u'Rename madame-bovary.txt to words/madame-bovary.txt', u'removed': [u'madame-bovary.txt'], u'id': u'1481a2de7b2a7d02428ad93446ab166be7793fbb'}]
+    {{body.repository.url}} => https://github.com/octokitty/testing
+    {{body.repository.watchers}} => 1
+    {{headers.Accept}} => */*
+    {{headers.Content-Length}} => 3787
     ...
     ...
-    {{repository.private}} => False
-    {{repository.pushed_at}} => 1363295520
-    {{repository.size}} => 2156
-    {{repository.stargazers}} => 1
-    {{repository.url}} => https://github.com/octokitty/testing
-    {{repository.watchers}} => 1
+    {{headers.Content-Type}} => application/x-www-form-urlencoded
     
     MacBook-Pro:hooky $ 
 
@@ -171,9 +164,9 @@ An example config file might look like this:
 *templates/GithubToHttpbinPost.tmpl*
 
     {
-       "committer":"{{head_commit.author.name}}",
-       "id":"{{head_commit.id}}",
-       "url":"{{repository.url}}"
+       "committer":"{{body.head_commit.author.name}}",
+       "id":"{{body.head_commit.id}}",
+       "url":"{{body.repository.url}}"
     }
 
 If you submit a POST hook from Github (or manually using the example data from Github):
@@ -206,5 +199,5 @@ This system provides a very simple syntax for referencing variables pushed to ou
 You can reference the fields using the *{{field}}* syntax like this:
 
      { 'date': '01/01/2013',
-       'email': {{user.email}}
+       'email': {{body.user.email}}
      }

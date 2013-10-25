@@ -57,18 +57,14 @@ class PostTranslator(base.BaseTranslator):
             self.auth_password = None
 
     @gen.coroutine
-    def submit(self, content):
+    def submit(self, request):
         """Translates an incoming webchook and submits it to the dest service
 
         args:
-            content: A string containing the incoming webhook data.
+            request: Tornado HTTPRequest Object
         """
         # Parse the incoming data into a dict that we can handle
-        try:
-            data = self._content_to_dict(content)
-        except base.ContentException, e:
-            raise gen.Return((
-                {'success': False, 'message': format(str(e))}))
+        data = self._request_to_dict(request)
 
         # Parse our incoming data against our template and generate the
         # outbound POST body string.

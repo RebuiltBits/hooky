@@ -12,4 +12,4 @@
 #
 # Copyright 2013 Nextdoor.com, Inc
 
-__version__ = '0.0.1'  # http://semver.org/
+__version__ = '0.0.2'  # http://semver.org/

@@ -1,5 +1,8 @@
+import json
+
 from tornado import testing
 from tornado.testing import unittest
+from tornado import httpclient
 
 from hooky import utils
 from hooky.translators import base
@@ -20,32 +23,21 @@ class TestBaseTranslator(unittest.TestCase):
     def testJSONContentToDict(self):
         """Tests converting JSON content to a dict"""
         content = open('%s/github.json' % self.source_path, 'r').read()
-        data = self.translator._content_to_dict(content)
+        req = httpclient.HTTPRequest('/', body=content)
+        data = self.translator._request_to_dict(req)
         self.assertTrue(isinstance(data, dict))
-        self.assertEquals(data['ref'], 'refs/heads/master')
-        self.assertEquals(data['pusher']['email'], 'lolwut@noway.biz')
+        self.assertEquals(data['body']['ref'], 'refs/heads/master')
+        self.assertEquals(data['body']['pusher']['email'], 'lolwut@noway.biz')
 
     def testXMLContentToDict(self):
         """Tests converting XML content to a dict"""
         content = open('%s/shopify.xml' % self.source_path, 'r').read()
-        data = self.translator._content_to_dict(content)
+        req = httpclient.HTTPRequest('/', body=content)
+        data = self.translator._request_to_dict(req)
         self.assertTrue(isinstance(data, dict))
-        self.assertEquals(data['order']['billing-address']['address1'],
+        self.assertEquals(data['body']['order']['billing-address']['address1'],
                           '123 Amoebobacterieae St')
-        self.assertEquals(data['order']['email'], 'bob@customer.com')
-
-    def testDictContentToDict(self):
-        """Tests converting dict content to a dict"""
-        content = {'foo': 'bar', 'baz': 'boo'}
-        data = self.translator._content_to_dict(content)
-        self.assertTrue(isinstance(data, dict))
-        self.assertEquals(data, content)
-
-    def testBogusContentToDict(self):
-        """Bad content raises a ContentException"""
-        self.assertRaises(base.ContentException,
-                          self.translator._content_to_dict,
-                          'bogus_data')
+        self.assertEquals(data['body']['order']['email'], 'bob@customer.com')
 
 
 class TestTestTranslator(testing.AsyncTestCase):
@@ -72,28 +64,26 @@ class TestTestTranslator(testing.AsyncTestCase):
     def testSubmit(self):
         """Test the submit() method"""
         # Simple data to submit
-        test = {'foo': 'bar'}
-
-        # Expected results
-        expected = {'success': True,
-                    'message': 'Key Name => Key value\n{{foo}} => bar'}
+        d = {'foo': 'bar'}
+        j = json.dumps(d)
+        req = httpclient.HTTPRequest('/', body=j)
 
         # Call the submit method
-        result = yield self.translator.submit(test)
+        result = yield self.translator.submit(req)
         self.stop()
 
         # Are they the same?
-        self.assertEquals(result, expected)
+        self.assertTrue(result['success'])
+        self.assertIn('body.foo', result['message'])
 
     @testing.gen_test
     def testSubmitBogusData(self):
-        """Test the submit() method with bogus data"""
+        """Test the submit() method with bogus data (should still work)"""
         # Simple data to submit
-        test = "<bogus data>"
+        req = httpclient.HTTPRequest('/', body="<bogus data>")
 
         # Call the submit method
-        result = yield self.translator.submit(test)
+        result = yield self.translator.submit(req)
 
         # Are they the same?
-        self.assertEquals(result['success'], False)
-        self.assertIn('is not valid', result['message'])
+        self.assertEquals(result['success'], True)

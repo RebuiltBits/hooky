@@ -36,7 +36,7 @@ class HookHandlerIntegrationTests(testing.AsyncHTTPTestCase):
         self.http_client.fetch(self.get_url('/hook/test?foo=bar&foo=baz'),
                                self.stop)
         response = self.wait()
-        self.assertIn('{{foo}} => [\'bar\', \'baz\']', response.body)
+        self.assertIn('{{arguments.foo}} => [\'bar\', \'baz\']', response.body)
         self.assertEquals(200, response.code)
 
         # Test 2: No arguments
@@ -55,7 +55,7 @@ class HookHandlerIntegrationTests(testing.AsyncHTTPTestCase):
             body='{"foo":"bar"}')
         self.http_client.fetch(req, self.stop)
         response = self.wait()
-        self.assertIn('{{foo}} => bar', response.body)
+        self.assertIn('{{body.foo}} => bar', response.body)
         self.assertEquals(200, response.code)
 
         # Test 2: Empty POST Body
@@ -75,8 +75,7 @@ class HookHandlerIntegrationTests(testing.AsyncHTTPTestCase):
             body='<xml> oo":"bar"}')
         self.http_client.fetch(req, self.stop)
         response = self.wait()
-        self.assertIn('is not valid', response.body)
-        self.assertEquals(502, response.code)
+        self.assertEquals(200, response.code)
 
     @testing.gen_test
     def testHookPUT(self):
@@ -88,7 +87,7 @@ class HookHandlerIntegrationTests(testing.AsyncHTTPTestCase):
             body='{"foo":"bar"}')
         self.http_client.fetch(req, self.stop)
         response = self.wait()
-        self.assertIn('{{foo}} => bar', response.body)
+        self.assertIn('{{body.foo}} => bar', response.body)
         self.assertEquals(200, response.code)
 
         # Test 2: Empty PUT Body
@@ -108,5 +107,4 @@ class HookHandlerIntegrationTests(testing.AsyncHTTPTestCase):
             body='<xml> oo":"bar"}')
         self.http_client.fetch(req, self.stop)
         response = self.wait()
-        self.assertIn('is not valid', response.body)
-        self.assertEquals(502, response.code)
+        self.assertEquals(200, response.code)

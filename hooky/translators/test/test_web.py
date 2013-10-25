@@ -1,4 +1,5 @@
 from tornado import testing
+from tornado import httpclient
 
 from hooky import utils
 from hooky.translators import web
@@ -6,7 +7,8 @@ from hooky.translators import web
 # Defaults to use for the unit tests below
 URL = 'http://httpbin.org/post'
 CONTENT_TYPE = 'application/json'
-TEMPLATE = '{\n "email": "{{pusher.email}}",\n "name": "{{pusher.name}}"\n}'
+TEMPLATE = ('{\n "email": "{{body.pusher.email}}",\n '
+            '"name": "{{body.pusher.name}}"\n}')
 AUTH = 'user:pass'
 AUTH_MODE = 'basic'
 
@@ -33,14 +35,15 @@ class PostTranslatorIntegrationTests(testing.AsyncTestCase):
                                         TEMPLATE, AUTH, AUTH_MODE)
 
         # Get the data we're submitting from the large template
-        test = open('%s/github.json' % self.source_path, 'r').read()
+        content = open('%s/github.json' % self.source_path, 'r').read()
+        req = httpclient.HTTPRequest('/', body=content)
 
         # Expected results
         expected = {'success': True,
                     'message': 'OK'}
 
         # Call the submit method
-        results = yield translator.submit(test)
+        results = yield translator.submit(req)
         self.stop()
 
         # Are they the same?
@@ -57,8 +60,8 @@ class PostTranslatorIntegrationTests(testing.AsyncTestCase):
                                         AUTH_MODE)
 
         # Get the data we're submitting from the large template
-        # Get the data we're submitting from the large template
-        test = open('%s/github.json' % self.source_path, 'r').read()
+        content = open('%s/github.json' % self.source_path, 'r').read()
+        req = httpclient.HTTPRequest('/', body=content)
 
         # Expected results
         expected = {
@@ -66,7 +69,7 @@ class PostTranslatorIntegrationTests(testing.AsyncTestCase):
             'message': '2XX not returned: HTTP 405: Method Not Allowed'}
 
         # Call the submit method
-        results = yield translator.submit(test)
+        results = yield translator.submit(req)
         self.stop()
 
         # Are they the same?
@@ -81,16 +84,16 @@ class PostTranslatorIntegrationTests(testing.AsyncTestCase):
                                         AUTH_MODE)
 
         # Get the data we're submitting from the large template
-        test = "<bogus_data>"
+        content = "<bogus_data>"
+        req = httpclient.HTTPRequest('/', content)
 
         # Expected results
         expected = {
             'success': False,
-            'message': 'Supplied content is not valid '
-                       'JSON or XML: <bogus_data>'}
+            'message': '2XX not returned: HTTP 405: Method Not Allowed'}
 
         # Call the submit method
-        results = yield translator.submit(test)
+        results = yield translator.submit(req)
         self.stop()
 
         # Are they the same?
